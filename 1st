@@ -1,0 +1,85 @@
+import heapq
+
+# Define the goal state of the puzzle
+goal_state = tuple(range(9))
+
+# Define possible movements in terms of indexes change
+moves = {
+    0: [1, 3],
+    1: [0, 2, 4],
+    2: [1, 5],
+    3: [0, 4, 6],
+    4: [1, 3, 5, 7],
+    5: [2, 4, 8],
+    6: [3, 7],
+    7: [4, 6, 8],
+    8: [5, 7]
+}
+
+# Define a function to calculate the Manhattan distance heuristic
+def manhattan_distance(state):
+    distance = 0
+    for i in range(1, 9):
+        current_index = state.index(i)
+        goal_index = goal_state.index(i)
+        current_row, current_col = current_index // 3, current_index % 3
+        goal_row, goal_col = goal_index // 3, goal_index % 3
+        distance += abs(current_row - goal_row) + abs(current_col - goal_col)
+    return distance
+
+# Define the A* search algorithm
+def astar_search(initial_state):
+    if initial_state == goal_state:
+        return []
+
+    heap = []
+    heapq.heappush(heap, (manhattan_distance(initial_state), 0, initial_state, []))
+    visited = set()
+    visited.add(initial_state)
+
+    while heap:
+        _, cost, current_state, path = heapq.heappop(heap)
+
+        blank_index = current_state.index(0)
+        for move in moves[blank_index]:
+            new_state = list(current_state)
+            new_state[blank_index], new_state[move] = new_state[move], new_state[blank_index]
+            new_state_tuple = tuple(new_state)
+
+            if new_state_tuple not in visited:
+                if new_state_tuple == goal_state:
+                    return path + [new_state_tuple]
+
+                new_cost = cost + 1
+                heapq.heappush(heap, (new_cost + manhattan_distance(new_state_tuple), new_cost, new_state_tuple, path + [new_state_tuple]))
+                visited.add(new_state_tuple)
+
+    return None
+
+# Function to print the solution path
+def print_solution(path):
+    if not path:
+        print("No solution found")
+    else:
+        print("Solution found in", len(path), "steps:")
+        for i, state in enumerate(path):
+            print("Step", i + 1, ":")
+            print_state(state)
+            print()
+
+# Helper function to print the puzzle state
+def print_state(state):
+    for i in range(9):
+        if i % 3 == 0 and i != 0:
+            print()
+        if state[i] == 0:
+            print("_", end=" ")
+        else:
+            print(state[i], end=" ")
+    print()
+
+# Example usage:
+if __name__ == "__main__":
+    initial_state = (1, 2, 3, 4, 5, 6, 0, 7, 8)
+    path = astar_search(initial_state)
+    print_solution(path)
